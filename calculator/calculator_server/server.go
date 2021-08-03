@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -65,6 +66,27 @@ func (server *Server) DecomposeIntToPrimeNumber(req *calculatorpb.DecomposeIntTo
 	})
 
 	return nil
+}
+
+func (server *Server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+	var average float32 = 0
+	var flag int = -1
+
+	for {
+		req, err := stream.Recv()
+		flag += 1
+		if err == io.EOF {
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Average: average / float32(flag),
+			})
+		}
+
+		if err != nil {
+			log.Fatalf("err %f", err)
+		}
+		fmt.Println("received", req.Number)
+		average += float32(req.Number)
+	}
 }
 
 func main() {

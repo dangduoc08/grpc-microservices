@@ -21,9 +21,19 @@ message DecomposeIntToPrimeNumberResponse {
   int64 prime = 1;
 }
 
+message ComputeAverageRequest {
+  int64 number = 1;
+}
+
+message ComputeAverageResponse {
+  float average = 1;
+}
+
 service CalculatorService {
   // uanry
   rpc Add (AddRequest) returns (AdddResponse) {};
   // server streaming
   rpc DecomposeIntToPrimeNumber (DecomposeIntToPrimeNumberRequest) returns (stream DecomposeIntToPrimeNumberResponse) {};
+  // client streaming
+  rpc ComputeAverage (stream ComputeAverageRequest) returns (ComputeAverageResponse){};
 }

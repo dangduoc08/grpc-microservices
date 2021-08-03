@@ -19,8 +19,9 @@ func main() {
 
 	client := calculatorpb.NewCalculatorServiceClient(conn)
 
-	Add(client)
-	DecomposeIntToPrimeNumber(789, client)
+	// Add(client)
+	// DecomposeIntToPrimeNumber(789, client)
+	ComputeAverage([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9}, client)
 }
 
 func Add(client calculatorpb.CalculatorServiceClient) {
@@ -66,4 +67,24 @@ func DecomposeIntToPrimeNumber(num int64, client calculatorpb.CalculatorServiceC
 	}
 
 	fmt.Println("result", result)
+}
+
+func ComputeAverage(nums []int64, client calculatorpb.CalculatorServiceClient) {
+	stream, err := client.ComputeAverage(context.Background())
+	if err != nil {
+		log.Fatalf("error while receiving %v", err)
+	}
+
+	for _, num := range nums {
+		stream.Send(&calculatorpb.ComputeAverageRequest{
+			Number: num,
+		})
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("error %v", err)
+	}
+
+	fmt.Println("average number", res.Average)
 }

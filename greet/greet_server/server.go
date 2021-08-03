@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"strconv"
@@ -46,6 +47,24 @@ func (s *Server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, server greet
 	}
 
 	return nil
+}
+
+func (s *Server) GreetManyGuys(stream greetpb.GreetService_GreetManyGuysServer) error {
+	var result string = ""
+
+	for {
+		recv, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&greetpb.GreetManyGuysResponse{
+				Result: result,
+			})
+		}
+		fmt.Println("server received from client", recv.Name)
+		if err != nil {
+			log.Fatalf("error ne %f", err)
+		}
+		result += "hello " + recv.Name + " "
+	}
 }
 
 func main() {

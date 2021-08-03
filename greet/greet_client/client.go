@@ -18,7 +18,8 @@ func main() {
 	defer conn.Close()
 
 	// unary(conn)
-	serverStreaming(conn)
+	// serverStreaming(conn)
+	clientStreaming(conn)
 }
 
 func unary(conn *grpc.ClientConn) {
@@ -69,4 +70,33 @@ func serverStreaming(conn *grpc.ClientConn) {
 		fmt.Println("response", res.Result)
 	}
 
+}
+
+func clientStreaming(conn *grpc.ClientConn) {
+	greetClient := greetpb.NewGreetServiceClient(conn)
+
+	greetManyGuysService, err := greetClient.GreetManyGuys(context.Background())
+	if err != nil {
+		log.Fatalf("error %f", err)
+	}
+
+	data := []string{
+		"John Cena",
+		"The Undertaker",
+		"Randy Ortan",
+		"Triple H",
+	}
+
+	for _, el := range data {
+		greetManyGuysService.Send(&greetpb.GreetManyGuysRequest{
+			Name: el,
+		})
+	}
+
+	res, err := greetManyGuysService.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("error 2 %f", err)
+	}
+
+	fmt.Println("client received response from server", res.Result)
 }
