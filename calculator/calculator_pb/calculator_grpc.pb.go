@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalculatorServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AdddResponse, error)
+	DecomposeIntToPrimeNumber(ctx context.Context, in *DecomposeIntToPrimeNumberRequest, opts ...grpc.CallOption) (CalculatorService_DecomposeIntToPrimeNumberClient, error)
 }
 
 type calculatorServiceClient struct {
@@ -38,11 +39,44 @@ func (c *calculatorServiceClient) Add(ctx context.Context, in *AddRequest, opts 
 	return out, nil
 }
 
+func (c *calculatorServiceClient) DecomposeIntToPrimeNumber(ctx context.Context, in *DecomposeIntToPrimeNumberRequest, opts ...grpc.CallOption) (CalculatorService_DecomposeIntToPrimeNumberClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[0], "/calculator.CalculatorService/DecomposeIntToPrimeNumber", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorServiceDecomposeIntToPrimeNumberClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CalculatorService_DecomposeIntToPrimeNumberClient interface {
+	Recv() (*DecomposeIntToPrimeNumberResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorServiceDecomposeIntToPrimeNumberClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorServiceDecomposeIntToPrimeNumberClient) Recv() (*DecomposeIntToPrimeNumberResponse, error) {
+	m := new(DecomposeIntToPrimeNumberResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
 type CalculatorServiceServer interface {
 	Add(context.Context, *AddRequest) (*AdddResponse, error)
+	DecomposeIntToPrimeNumber(*DecomposeIntToPrimeNumberRequest, CalculatorService_DecomposeIntToPrimeNumberServer) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -52,6 +86,9 @@ type UnimplementedCalculatorServiceServer struct {
 
 func (UnimplementedCalculatorServiceServer) Add(context.Context, *AddRequest) (*AdddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedCalculatorServiceServer) DecomposeIntToPrimeNumber(*DecomposeIntToPrimeNumberRequest, CalculatorService_DecomposeIntToPrimeNumberServer) error {
+	return status.Errorf(codes.Unimplemented, "method DecomposeIntToPrimeNumber not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -84,6 +121,27 @@ func _CalculatorService_Add_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CalculatorService_DecomposeIntToPrimeNumber_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DecomposeIntToPrimeNumberRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CalculatorServiceServer).DecomposeIntToPrimeNumber(m, &calculatorServiceDecomposeIntToPrimeNumberServer{stream})
+}
+
+type CalculatorService_DecomposeIntToPrimeNumberServer interface {
+	Send(*DecomposeIntToPrimeNumberResponse) error
+	grpc.ServerStream
+}
+
+type calculatorServiceDecomposeIntToPrimeNumberServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorServiceDecomposeIntToPrimeNumberServer) Send(m *DecomposeIntToPrimeNumberResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -96,6 +154,12 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CalculatorService_Add_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "DecomposeIntToPrimeNumber",
+			Handler:       _CalculatorService_DecomposeIntToPrimeNumber_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "calculator/calculator_pb/calculator.proto",
 }

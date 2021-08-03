@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	calculatorpb "grpc-microservices/calculator/calculator_pb"
+	"io"
 	"log"
 
 	"google.golang.org/grpc"
@@ -18,6 +19,11 @@ func main() {
 
 	client := calculatorpb.NewCalculatorServiceClient(conn)
 
+	Add(client)
+	DecomposeIntToPrimeNumber(789, client)
+}
+
+func Add(client calculatorpb.CalculatorServiceClient) {
 	ctx := context.Background()
 	req := calculatorpb.AddRequest{
 		Number1: 10,
@@ -30,4 +36,34 @@ func main() {
 	}
 
 	fmt.Println("response from server", res.Result)
+}
+
+func DecomposeIntToPrimeNumber(num int64, client calculatorpb.CalculatorServiceClient) {
+	fmt.Println("client sent", num)
+
+	ctx := context.Background()
+	req := &calculatorpb.DecomposeIntToPrimeNumberRequest{
+		Number: num,
+	}
+
+	stream, err := client.DecomposeIntToPrimeNumber(ctx, req)
+	if err != nil {
+		log.Fatalf("client error %v", err)
+	}
+	var result int64 = 1
+
+	for {
+		res, err := stream.Recv()
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("error while receiving %v", err)
+		}
+		fmt.Println("client received", res.Prime)
+		result = result * res.Prime
+	}
+
+	fmt.Println("result", result)
 }

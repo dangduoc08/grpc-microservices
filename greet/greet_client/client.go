@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	greetpb "grpc-microservices/greet/greet_pb"
+	"io"
 	"log"
 
 	"google.golang.org/grpc"
@@ -16,8 +17,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	greetClient := greetpb.NewGreetServiceClient(conn)
+	// unary(conn)
+	serverStreaming(conn)
+}
 
+func unary(conn *grpc.ClientConn) {
+	greetClient := greetpb.NewGreetServiceClient(conn)
 	ctx := context.Background()
 	req := &greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
@@ -34,4 +39,34 @@ func main() {
 	}
 
 	fmt.Println("response", res.Result)
+}
+
+func serverStreaming(conn *grpc.ClientConn) {
+	greetClient := greetpb.NewGreetServiceClient(conn)
+
+	ctx := context.Background()
+	req := &greetpb.GreetManyTimesRequest{
+		FirstName: "Duoc",
+		LastName:  "Ta Dang",
+		Age:       27,
+	}
+
+	greetManyTimesClient, err := greetClient.GreetManyTimes(ctx, req)
+	if err != nil {
+		log.Fatalf("err %f", err)
+	}
+
+	for {
+		res, err := greetManyTimesClient.Recv()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			log.Fatalf("err %f", err)
+		}
+
+		fmt.Println("response", res.Result)
+	}
+
 }

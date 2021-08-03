@@ -13,6 +13,17 @@ message AdddResponse {
   int64 result = 1;
 }
 
+message DecomposeIntToPrimeNumberRequest {
+  int64 number = 1;
+}
+
+message DecomposeIntToPrimeNumberResponse {
+  int64 prime = 1;
+}
+
 service CalculatorService {
+  // uanry
   rpc Add (AddRequest) returns (AdddResponse) {};
+  // server streaming
+  rpc DecomposeIntToPrimeNumber (DecomposeIntToPrimeNumberRequest) returns (stream DecomposeIntToPrimeNumberResponse) {};
 }

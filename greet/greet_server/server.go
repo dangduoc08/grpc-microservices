@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"time"
 
 	greetpb "grpc-microservices/greet/greet_pb"
 
@@ -27,6 +29,23 @@ func (s *Server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb
 	}
 
 	return &res, nil
+}
+
+func (s *Server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, server greetpb.GreetService_GreetManyTimesServer) error {
+	firstName := req.GetFirstName()
+	lastName := req.GetLastName()
+
+	for i := 0; i < 10; i++ {
+		result := "Hello" + firstName + " " + lastName + "_" + strconv.Itoa(i)
+
+		res := greetpb.GreetManyTimesResponse{
+			Result: result,
+		}
+		time.Sleep(time.Millisecond * 1000)
+		server.Send(&res)
+	}
+
+	return nil
 }
 
 func main() {
