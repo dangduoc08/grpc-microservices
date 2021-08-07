@@ -21,7 +21,8 @@ func main() {
 
 	// Add(client)
 	// DecomposeIntToPrimeNumber(789, client)
-	ComputeAverage([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9}, client)
+	// ComputeAverage([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9}, client)
+	FindMaximum([]int64{1, 5, 3, 6, 2, 20}, client)
 }
 
 func Add(client calculatorpb.CalculatorServiceClient) {
@@ -87,4 +88,42 @@ func ComputeAverage(nums []int64, client calculatorpb.CalculatorServiceClient) {
 	}
 
 	fmt.Println("average number", res.Average)
+}
+
+func FindMaximum(nums []int64, client calculatorpb.CalculatorServiceClient) {
+	stream, err := client.FindMaximum(context.Background())
+	if err != nil {
+		log.Fatalf("error while receiving %v", err)
+	}
+
+	wait := make(chan interface{})
+
+	go func() {
+		for _, num := range nums {
+			stream.Send(&calculatorpb.FindMaximumRequest{
+				Number: num,
+			})
+		}
+		err = stream.CloseSend()
+		if err != nil {
+			fmt.Println("error while sending", err)
+		}
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				fmt.Println("error while receiving", err.Error())
+				break
+			}
+			fmt.Println("current max is", res.Max)
+		}
+		close(wait)
+	}()
+
+	<-wait
 }
