@@ -37,13 +37,25 @@ message FindMaximumResponse {
   int64 max = 1;
 }
 
+message FindSQRTRequest {
+  double number = 1;
+}
+
+message FindSQRTResponse {
+  double rootNumber = 1;
+}
+
 service CalculatorService {
   // uanry
   rpc Add (AddRequest) returns (AdddResponse) {};
+   // uanry with deadline
+   rpc AddWithDeadline (AddRequest) returns (AdddResponse) {};
   // server streaming
   rpc DecomposeIntToPrimeNumber (DecomposeIntToPrimeNumberRequest) returns (stream DecomposeIntToPrimeNumberResponse) {};
   // client streaming
   rpc ComputeAverage (stream ComputeAverageRequest) returns (ComputeAverageResponse){};
   // bi-di streaming
   rpc FindMaximum (stream FindMaximumRequest) returns (stream FindMaximumResponse) {};
+  // unary error handling
+  rpc FindSQRT (FindSQRTRequest) returns (FindSQRTResponse) {};
 }

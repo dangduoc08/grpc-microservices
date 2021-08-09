@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
 
 	calculatorpb "grpc-microservices/calculator/calculator_pb"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
@@ -118,6 +121,20 @@ func (server *Server) FindMaximum(stream calculatorpb.CalculatorService_FindMaxi
 			}
 		}
 	}
+}
+
+func (server *Server) FindSQRT(ctx context.Context, req *calculatorpb.FindSQRTRequest) (*calculatorpb.FindSQRTResponse, error) {
+	number := req.GetNumber()
+	if number < 0 {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"%f is negative number, must be pass positive number",
+			number,
+		)
+	}
+	return &calculatorpb.FindSQRTResponse{
+		RootNumber: math.Sqrt(number),
+	}, nil
 }
 
 func main() {

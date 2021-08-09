@@ -20,12 +20,16 @@ const _ = grpc.SupportPackageIsVersion7
 type CalculatorServiceClient interface {
 	// uanry
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AdddResponse, error)
+	// uanry with deadline
+	AddWithDeadline(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AdddResponse, error)
 	// server streaming
 	DecomposeIntToPrimeNumber(ctx context.Context, in *DecomposeIntToPrimeNumberRequest, opts ...grpc.CallOption) (CalculatorService_DecomposeIntToPrimeNumberClient, error)
 	// client streaming
 	ComputeAverage(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_ComputeAverageClient, error)
 	// bi-di streaming
 	FindMaximum(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_FindMaximumClient, error)
+	// unary error handling
+	FindSQRT(ctx context.Context, in *FindSQRTRequest, opts ...grpc.CallOption) (*FindSQRTResponse, error)
 }
 
 type calculatorServiceClient struct {
@@ -39,6 +43,15 @@ func NewCalculatorServiceClient(cc grpc.ClientConnInterface) CalculatorServiceCl
 func (c *calculatorServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AdddResponse, error) {
 	out := new(AdddResponse)
 	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/Add", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calculatorServiceClient) AddWithDeadline(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AdddResponse, error) {
+	out := new(AdddResponse)
+	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/AddWithDeadline", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -142,18 +155,31 @@ func (x *calculatorServiceFindMaximumClient) Recv() (*FindMaximumResponse, error
 	return m, nil
 }
 
+func (c *calculatorServiceClient) FindSQRT(ctx context.Context, in *FindSQRTRequest, opts ...grpc.CallOption) (*FindSQRTResponse, error) {
+	out := new(FindSQRTResponse)
+	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/FindSQRT", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
 type CalculatorServiceServer interface {
 	// uanry
 	Add(context.Context, *AddRequest) (*AdddResponse, error)
+	// uanry with deadline
+	AddWithDeadline(context.Context, *AddRequest) (*AdddResponse, error)
 	// server streaming
 	DecomposeIntToPrimeNumber(*DecomposeIntToPrimeNumberRequest, CalculatorService_DecomposeIntToPrimeNumberServer) error
 	// client streaming
 	ComputeAverage(CalculatorService_ComputeAverageServer) error
 	// bi-di streaming
 	FindMaximum(CalculatorService_FindMaximumServer) error
+	// unary error handling
+	FindSQRT(context.Context, *FindSQRTRequest) (*FindSQRTResponse, error)
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -164,6 +190,9 @@ type UnimplementedCalculatorServiceServer struct {
 func (UnimplementedCalculatorServiceServer) Add(context.Context, *AddRequest) (*AdddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
+func (UnimplementedCalculatorServiceServer) AddWithDeadline(context.Context, *AddRequest) (*AdddResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddWithDeadline not implemented")
+}
 func (UnimplementedCalculatorServiceServer) DecomposeIntToPrimeNumber(*DecomposeIntToPrimeNumberRequest, CalculatorService_DecomposeIntToPrimeNumberServer) error {
 	return status.Errorf(codes.Unimplemented, "method DecomposeIntToPrimeNumber not implemented")
 }
@@ -172,6 +201,9 @@ func (UnimplementedCalculatorServiceServer) ComputeAverage(CalculatorService_Com
 }
 func (UnimplementedCalculatorServiceServer) FindMaximum(CalculatorService_FindMaximumServer) error {
 	return status.Errorf(codes.Unimplemented, "method FindMaximum not implemented")
+}
+func (UnimplementedCalculatorServiceServer) FindSQRT(context.Context, *FindSQRTRequest) (*FindSQRTResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindSQRT not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -200,6 +232,24 @@ func _CalculatorService_Add_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CalculatorServiceServer).Add(ctx, req.(*AddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CalculatorService_AddWithDeadline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalculatorServiceServer).AddWithDeadline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/calculator.CalculatorService/AddWithDeadline",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalculatorServiceServer).AddWithDeadline(ctx, req.(*AddRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -277,6 +327,24 @@ func (x *calculatorServiceFindMaximumServer) Recv() (*FindMaximumRequest, error)
 	return m, nil
 }
 
+func _CalculatorService_FindSQRT_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindSQRTRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalculatorServiceServer).FindSQRT(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/calculator.CalculatorService/FindSQRT",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalculatorServiceServer).FindSQRT(ctx, req.(*FindSQRTRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -287,6 +355,14 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Add",
 			Handler:    _CalculatorService_Add_Handler,
+		},
+		{
+			MethodName: "AddWithDeadline",
+			Handler:    _CalculatorService_AddWithDeadline_Handler,
+		},
+		{
+			MethodName: "FindSQRT",
+			Handler:    _CalculatorService_FindSQRT_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

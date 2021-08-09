@@ -8,6 +8,8 @@ import (
 	"log"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -19,17 +21,18 @@ func main() {
 
 	client := calculatorpb.NewCalculatorServiceClient(conn)
 
-	// Add(client)
+	// Add(10, 5, client)
 	// DecomposeIntToPrimeNumber(789, client)
 	// ComputeAverage([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9}, client)
-	FindMaximum([]int64{1, 5, 3, 6, 2, 20}, client)
+	// FindMaximum([]int64{1, 5, 3, 6, 2, 20}, client)
+	FindSQRT(-9, client)
 }
 
-func Add(client calculatorpb.CalculatorServiceClient) {
+func Add(number1, number2 int, client calculatorpb.CalculatorServiceClient) {
 	ctx := context.Background()
 	req := calculatorpb.AddRequest{
-		Number1: 10,
-		Number2: 3,
+		Number1: int64(number1),
+		Number2: int64(number2),
 	}
 
 	res, err := client.Add(ctx, &req)
@@ -126,4 +129,22 @@ func FindMaximum(nums []int64, client calculatorpb.CalculatorServiceClient) {
 	}()
 
 	<-wait
+}
+
+func FindSQRT(number float64, client calculatorpb.CalculatorServiceClient) {
+	res, err := client.FindSQRT(context.Background(), &calculatorpb.FindSQRTRequest{
+		Number: number,
+	})
+	if err != nil {
+		status, ok := status.FromError(err)
+		if ok {
+			if status.Code() == codes.InvalidArgument {
+				log.Fatalf(status.Message())
+			}
+		} else {
+			log.Fatalf("error: %f", err)
+		}
+	} else {
+		fmt.Printf("square root number of %v is %v\n", number, res.RootNumber)
+	}
 }
