@@ -3,5 +3,6 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Hello, world!")
+	var a = 2.1 + 3.666
+	fmt.Println("Hello, world!", a)
 }

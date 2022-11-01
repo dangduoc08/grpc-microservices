@@ -6,14 +6,21 @@ import (
 	calculatorpb "grpc-microservices/calculator/calculator_pb"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
 func main() {
-	conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
+	creds, err := credentials.NewClientTLSFromFile("../../ssl/ca.crt", "")
+	if err != nil {
+		log.Fatalf("creds error %v", err)
+	}
+
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("client error %v", err)
 	}
@@ -21,11 +28,12 @@ func main() {
 
 	client := calculatorpb.NewCalculatorServiceClient(conn)
 
-	// Add(10, 5, client)
+	Add(10, 5, client)
+	// AddWithDeadline(10, 5, client)
 	// DecomposeIntToPrimeNumber(789, client)
 	// ComputeAverage([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9}, client)
 	// FindMaximum([]int64{1, 5, 3, 6, 2, 20}, client)
-	FindSQRT(-9, client)
+	// FindSQRT(-9, client)
 }
 
 func Add(number1, number2 int, client calculatorpb.CalculatorServiceClient) {
@@ -37,6 +45,30 @@ func Add(number1, number2 int, client calculatorpb.CalculatorServiceClient) {
 
 	res, err := client.Add(ctx, &req)
 	if err != nil {
+		log.Fatalf("client error %v", err)
+	}
+
+	fmt.Println("response from server", res.Result)
+}
+
+func AddWithDeadline(number1, number2 int, client calculatorpb.CalculatorServiceClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+	defer cancel()
+
+	req := calculatorpb.AddRequest{
+		Number1: int64(number1),
+		Number2: int64(number2),
+	}
+
+	res, err := client.Add(ctx, &req)
+	status, ok := status.FromError(err)
+	if ok {
+		if status.Code() == codes.DeadlineExceeded {
+			log.Fatalf(status.Message())
+		} else {
+			log.Fatalf("error %v", status)
+		}
+	} else if err != nil {
 		log.Fatalf("client error %v", err)
 	}
 

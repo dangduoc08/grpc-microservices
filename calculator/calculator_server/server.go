@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
@@ -48,6 +49,23 @@ func (server *Server) Add(ctx context.Context, req *calculatorpb.AddRequest) (*c
 	var number1 int64 = req.GetNumber1()
 	var number2 int64 = req.GetNumber2()
 	result := number1 + number2
+
+	return &calculatorpb.AdddResponse{
+		Result: result,
+	}, nil
+}
+
+func (server *Server) AddWithDeadline(ctx context.Context, req *calculatorpb.AddRequest) (*calculatorpb.AdddResponse, error) {
+	var number1 int64 = req.GetNumber1()
+	var number2 int64 = req.GetNumber2()
+	result := number1 + number2
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Errorf(
+			codes.Canceled,
+			"request deadline exceeded",
+		)
+	}
 
 	return &calculatorpb.AdddResponse{
 		Result: result,
@@ -138,14 +156,26 @@ func (server *Server) FindSQRT(ctx context.Context, req *calculatorpb.FindSQRTRe
 }
 
 func main() {
-	listener, err := net.Listen("tcp", "127.0.0.1:50051")
-	fmt.Println("server listen on: 127.0.0.1:50051")
+	// cert := &tls.Certificate{
+	// 	Certificate: [][]byte{[]byte(("ssl/server_ca.crt"))},
+	// 	PrivateKey:  "ssl/server_ca.key",
+	// }
+	transCreds, err := credentials.NewServerTLSFromFile(
+		"../../ssl/server.crt",
+		"../../ssl/server.key",
+	)
+	if err != nil {
+		log.Fatalf("creds error %v", err)
+	}
+
+	listener, err := net.Listen("tcp", "localhost:50051")
+	fmt.Println("server listen on: localhost:50051")
 
 	if err != nil {
 		log.Fatalf("error %v", err)
 	}
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.Creds(transCreds))
 
 	calculatorpb.RegisterCalculatorServiceServer(server, &Server{})
 
